@@ -1,0 +1,294 @@
+---
+title: Exploratory Data Analysis
+date:
+output: html_document
+runtime: shiny
+---
+
+```{r initialisation, echo=FALSE, message=FALSE, results=FALSE}
+# libraries
+require(ggplot2)
+require(grid)
+library(Cairo)   # For nicer ggplot2 output when deployed on Linux
+
+
+
+# One time settings
+dataFilePath <- "~/RecycleBank/Data/eventsRecyclebank_diq20151130.csv"
+sampleProcent <- 1
+replace <- TRUE
+
+# Get the data
+dataSet <- read.csv(dataFilePath)
+set.seed(4690)
+sampleSize <- length(unique(dataSet$maxId))*sampleProcent
+index <- sample(dataSet$maxId,size = sampleSize, replace = replace)
+dataSet <- dataSet[dataSet$maxId %in% index,order(names(dataSet))]
+```
+
+```{r dataSetInfo, echo=FALSE}
+wellPanel(
+    h1("Data Set"),
+    h4("Origin:"),
+    dataFilePath,
+    
+    h4("Sample size:"),
+    paste(sampleProcent*100, "%", sep=""),
+    
+    h4("Number of Rows:"),
+    nrow(dataSet),
+    
+    h4("Number of Columns:"),
+    ncol(dataSet),
+    
+    h4("Column names:"),
+    lapply(names(dataSet), function (x) paste(x, " - ", sep=" "))
+)
+
+wellPanel(
+    h1("Statistics"),
+    inputPanel(
+        selectInput('xD', 
+                    label = 'Feature:', 
+                    choices = names(dataSet)
+        )
+    ),
+    
+    renderPrint({
+        x <- dataSet[,input$xD]
+        summary(x)
+    }),
+    
+    renderPrint({
+        x <- dataSet[,input$xD]
+        str(x)
+    })
+)
+```
+
+```{r, echo=FALSE}
+wellPanel(
+    h1("Plotting single feature"),
+    sidebarLayout(
+        sidebarPanel(
+            selectInput("plotType", 
+                        label = "Type of the plot:",
+                        choices = c("Histogram", "Box Plot",
+                                    "Dot Plot","Density"),
+                        selected = "BoxPlot"),
+            
+            selectInput('xAs', 
+                        label = 'x - as:', 
+                        choices = names(dataSet)),
+            
+            conditionalPanel(
+                condition = "input.plotType == 'Histogram'",
+
+               sliderInput("n_breaks",
+                            label =  "Bins:",
+                            min = 1,
+                            max = 50,
+                            value = 20)
+                               
+            ),
+            
+            conditionalPanel(
+                condition = "input.plotType == 'Density'",
+
+                sliderInput("n_breaks",
+                            label =  "Bins:",
+                            min = 1,
+                            max = 50,
+                            value = 20),
+                
+                sliderInput("bw_adjust", 
+                            label = "Bandwidth adjustment:",
+                            min = 1, 
+                            max = 100, 
+                            value = 20, 
+                            step = 1)
+                
+            )
+        ),
+        
+        mainPanel(
+            renderPlot({
+                x <- na.omit(dataSet[,input$xAs])
+                
+                if (input$plotType == "Histogram") {
+                     hist(x, 
+                         probability = TRUE, 
+                         breaks = as.numeric(input$n_breaks),
+                         xlab = input$xAs, 
+                         col = "grey",
+                         main = "")
+                    abline(v = mean(x), col = "blue", lwd = 2)
+                    abline(v = median(x), col = "red", lwd = 2)
+                    legend("topright", c("mean", "median"), col=c("blue", "red"), lwd=10)
+                   
+                } else if (input$plotType == "Box Plot") {
+                    boxplot(x,
+                            horizontal = TRUE,
+                            axes = FALSE,
+                            col="grey",
+                            xlab = input$xAs
+                    )
+                } else if (input$plotType == "Dot Plot") {
+                    dotchart(x, cex=.7,
+                             xlab=input$xAs)
+                    
+                } else if (input$plotType == "Density") {
+                    hist(x, 
+                         probability = TRUE, 
+                         breaks = as.numeric(input$n_breaks),
+                         xlab = input$xAs, main = "")
+                    dens <- density(x, 
+                                    adjust = input$bw_adjust)
+                    lines(dens, col = "green")
+                    abline(v = mean(x), col = "blue", lwd = 2)
+                    abline(v = median(x), col = "red", lwd = 2)
+                    legend("topright", c("mean", "median","density"), col=c("blue", "red","green"), lwd=10)
+                }
+            })
+        )
+    )
+)
+```
+
+
+```{r, echo=FALSE}
+wellPanel(
+    h1("Plotting Pairs"),
+    h6("If the plot is not revealing enough clerity on the relationship you might want to apply a function on the original data to get clearer shape of the distribution."),
+    inputPanel(
+        selectInput('xcol3', 
+                    label = 'x-as:', 
+                    choices = names(dataSet),
+                    selected = names(dataSet)[1]),
+        selectInput('ycol3', 
+                    label = 'y-as:', 
+                    choices = names(dataSet),
+                    selected = names(dataSet)[1]),
+        selectInput('fun3', 
+                    label = 'Function:', 
+                    c("normal", "log2","log10","^2","^3"))
+    ),
+    
+    renderPlot({
+        if (input$fun3 == "normal"){
+            x <- dataSet[,input$xcol3]
+            y <- dataSet[,input$ycol3]
+        } else if (input$fun3 == "log2"){
+            x <- paste("log2(",dataSet[,input$xcol3],")",sep="")
+            y <- paste("log2(",dataSet[,input$ycol3],")",sep="")
+        } else if (input$fun3 == "log10"){
+            x <- paste("log10(",dataSet[,input$xcol3],")",sep="")
+            y <- paste("log10(",dataSet[,input$ycol3],")",sep="")
+        } else if (input$fun3 == "^2"){
+            x <- paste(dataSet[,input$xcol3],"^2",sep="")
+            y <- paste(dataSet[,input$ycol3],"^2",sep="")
+        } else if (input$fun3 == "^3"){
+            x <- paste(dataSet[,input$xcol3],"^3",sep="")
+            y <- paste(dataSet[,input$ycol3],"^3",sep="")
+        }
+        qplot(x, y, data = dataSet, na.rm=TRUE) +
+            stat_smooth()
+    })
+    
+)
+```
+
+
+```{r, echo=FALSE}
+
+#         column(width = 4, class = "well",
+#                plotOutput("plot1", height = 300,
+#                           dblclick = "plot1_dblclick",
+#                           brush = brushOpts(
+#                               id = "plot1_brush",
+#                               resetOnNew = TRUE
+#                           )
+#                ),
+#                h6("Brush and double-click to zoom.")
+#         )
+#     )
+# )
+# 
+#     # -------------------------------------------------------------------
+#     # Single zoomable plot (on left)
+#     ranges <- reactiveValues(x = NULL, y = NULL)
+#     
+#     output$plot1 <- renderPlot({
+#         ggplot(dataSet, aes_string(xP, yP)) +
+#             geom_point() +
+#             coord_cartesian(xlim = ranges$x, ylim = ranges$y)
+#     })
+#     
+#     # When a double-click happens, check if there's a brush on the plot.
+#     # If so, zoom to the brush bounds; if not, reset the zoom.
+#     observeEvent(input$plot1_dblclick, {
+#         brush <- input$plot1_brush
+#         if (!is.null(brush)) {
+#             ranges$x <- c(brush$xmin, brush$xmax)
+#             ranges$y <- c(brush$ymin, brush$ymax)
+#             
+#         } else {
+#             ranges$x <- NULL
+#             ranges$y <- NULL
+#         }
+#     })
+# }
+# 
+# shinyApp(ui, server)
+
+```
+
+```{r, echo=FALSE}
+wellPanel(
+    h1("Correlations"),
+    h6("Explore the correlations for any combination of 6 features"),
+    inputPanel(
+        selectInput('feature1', 
+                    label = 'First feature:', 
+                    choices = names(dataSet),
+                    selected = names(dataSet)[1]),
+        selectInput('feature2', 
+                    label = 'Second feature:', 
+                    choices = names(dataSet),
+                    selected = names(dataSet)[2]),
+        selectInput('feature3', 
+                    label = 'Third feature:', 
+                    choices = names(dataSet),
+                    selected = names(dataSet)[3]),
+        selectInput('feature4', 
+                    label = 'Forth feature:', 
+                    choices = names(dataSet),
+                    selected = names(dataSet)[4]),
+        selectInput('feature5', 
+                    label = 'Fifth feature:', 
+                    choices = names(dataSet),
+                    selected = names(dataSet)[5]),
+        selectInput('feature6', 
+                    label = 'Sixth feature:', 
+                    choices = names(dataSet),
+                    selected = names(dataSet)[6])
+    ),
+    
+    renderPlot({
+        x <- dataSet[, c(input$feature1,input$feature2,input$feature3,input$feature4,input$feature5,input$feature6)]
+        panel.cor <- function(x, y, digits=2, prefix="", cex.cor)
+        {
+            usr <- par("usr"); on.exit(par(usr))
+            par(usr = c(0, 1, 0, 1))
+            r = (cor(x, y))
+            txt <- format(c(r, 0.123456789), digits=digits)[1]
+            txt <- paste(prefix, txt, sep="")
+            if(missing(cex.cor)) cex <- 0.8/strwidth(txt)
+            text(0.5, 0.5, txt, cex = cex * abs(r))
+        }
+        
+        pairs(x, lower.panel = panel.smooth, upper.panel = panel.cor)
+    })
+)
+```
+
