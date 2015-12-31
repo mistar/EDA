@@ -11,7 +11,14 @@ shinyUI(fluidPage(
   sidebarLayout(
     sidebarPanel(
       inputPanel(
-        selectInput('feature1', 
+        conditionalPanel(
+          condition = "input.datatabs == 'Initialization'",   
+          selectInput('s3Objects', 
+                      label = 'Select s3 object:', 
+                      choices = listS3Objects())
+        ),
+
+                selectInput('feature1', 
                     label = 'First feature:', 
                     choices = names(dataSet)
         ),
@@ -96,6 +103,12 @@ shinyUI(fluidPage(
     # Show a plot of the generated distribution
     mainPanel(
       tabsetPanel(id = "datatabs",
+                  tabPanel("Initialization", 
+                           wellPanel(
+                             h6("Data set:")
+                           )
+                  ),
+                  
                   tabPanel("Statistics",
                            wellPanel(
                              h6("Number of Rows:"),

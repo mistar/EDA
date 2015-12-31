@@ -1,20 +1,21 @@
-get_iris_data <- function() {
+getIrisData <- function(s3object="sample_datasets/iris_dataset/iris.csv") {
   sandboxyr::setCredentials(iamrole="analyticsSandboxServerRole")
-  iris_data <- sandboxyr::getS3Object(awsregion="eu-west-1",
+  irisData <- sandboxyr::getS3Object(awsregion="eu-west-1",
                                       s3bucket="analytics.sandbox.data",
-                                      s3object="sample_datasets/iris_dataset/iris.csv")
-  return(iris_data)
+                                      s3object=s3object)
+  return(irisData)
 }
 
-# One time settings
-#dataFilePath <- "~/RecycleBank/Data/eventsRecyclebank_diq20151130.csv"
-# sampleProcent <- 1
-# replace <- TRUE
+listS3Objects <- function(){
+  sandboxyr::setCredentials(iamrole="analyticsSandboxServerRole")
+  s3List <- sandboxyr::getS3Bucket(awsregion="eu-west-1",
+                                  s3bucket="analytics.sandbox.data")
+  s3List <- lapply(s3List[names(s3List)=="Contents"],function(x){x$Key})
+  l <- NA
+  for (i in 1:length(s3List)){
+    l <- c(l,s3List[[i]])
+  }
+  l <- l[grep("*.csv",l)]
+}
 
-# Get the data
-# dataSet <- read.csv(dataFilePath)
-dataSet <- get_iris_data()
-# set.seed(4690)
-# sampleSize <- nrow(dataSet)*sampleProcent
-# index <- sample(dataSet,size = sampleSize, replace = replace)
-# dataSet <- dataSet[index]
+dataSet <- getIrisData()
