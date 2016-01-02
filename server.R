@@ -1,37 +1,79 @@
 library(shiny)
 library(ggplot2)
+library(DT)
 
 source("global.R")
 
-# Define server logic required to draw a histogram
-shinyServer(function(input, output) {
+shinyServer(function(input, output,session) {
+
+  selectedData <-  reactive({
+    dataSet <- getS3Data(input$s3Object)
+    updateSelectInput(session, "feature1", choices = names(dataSet))
+    updateSelectInput(session, "feature2", choices = names(dataSet))
+    updateSelectInput(session, "feature3", choices = names(dataSet))
+    updateSelectInput(session, "feature4", choices = names(dataSet))
+    updateSelectInput(session, "feature5", choices = names(dataSet))
+    updateSelectInput(session, "feature6", choices = names(dataSet))
+    dataSet
+  })
   
-  # Expression that generates a histogram. The expression is
-  # wrapped in a call to renderPlot to indicate that:
-  #
-  #  1) It is "reactive" and therefore should re-execute automatically
-  #     when inputs change
-  #  2) Its output type is a plot
-  
-  output$distPlot <- renderPlot({
-    x    <- faithful[, 2]  # Old Faithful Geyser data
-    bins <- seq(min(x), max(x), length.out = input$bins + 1)
+  #-----------------------------------------------
+  output$dataTable <- renderDataTable({
+
+    # input$file1 will be NULL initially. After the user selects
+    # and uploads a file, it will be a data frame with 'name',
+    # 'size', 'type', and 'datapath' columns. The 'datapath'
+    # column will contain the local filenames where the data can
+    # be found.
     
-    # draw the histogram with the specified number of bins
-    hist(x, breaks = bins, col = 'darkgray', border = 'white')
+#    if(input$origin == 's3'){
+
+#     } else {
+#     inFile <- input$file1
+#     
+#     if (is.null(inFile))
+#       return(NULL)
+#     
+#     dataSet <- read.csv(inFile$datapath, header=input$header, sep=input$sep, 
+#              quote=input$quote)
+#     }
+    selectedData()
+  }, options = list(
+    lengthMenu = list(c(5, 10, 15, -1), c('5', '10', '15', '50')),
+    pageLength = 10
+  )
+)
+  
+  #-----------------------------------------------
+  output$nrow <- renderText({
+    nrow(selectedData())
+  })
+  #-----------------------------------------------
+  output$feature1 <- renderText({
+    selectedFeature1()
   })
   
+  #-----------------------------------------------
+  output$ncol <- renderText({
+    ncol(selectedData())
+  })
+  
+     #-----------------------------------------------
   output$summary <- renderPrint({
-    x <- dataSet[,input$feature1]
-    summary(x)
+    dataSet <- selectedData()
+    summary(dataSet[,input$feature1])
   })
   
+  #-----------------------------------------------
   output$str <- renderPrint({
-    x <- dataSet[,input$feature1]
-    str(x)
+    dataSet <- selectedData()
+    str(dataSet[,input$feature1])
   })
   
+  #-----------------------------------------------
   output$plot <- renderPlot({
+    dataSet <- selectedData()
+
     x <- na.omit(dataSet[,input$feature1])
     
     if (input$plotType == "Histogram") {
@@ -70,8 +112,11 @@ shinyServer(function(input, output) {
     }
   })
   
+  #-----------------------------------------------
   output$pairPlot <- renderPlot({
-    if (input$fun == "normal"){
+    dataSet <- selectedData()
+    
+        if (input$fun == "normal"){
         x <- dataSet[,input$feature1]
         y <- dataSet[,input$feature2]
       } else if (input$fun == "log2"){
@@ -91,7 +136,10 @@ shinyServer(function(input, output) {
         stat_smooth()
     })
 
+  #-----------------------------------------------
   output$correlations <- renderPlot({
+    dataSet <- selectedData()
+    
     x <- dataSet[, c(input$feature1,input$feature2,input$feature3,input$feature4,input$feature5,input$feature6)]
     panel.cor <- function(x, y, digits=2, prefix="", cex.cor)
     {
@@ -106,4 +154,5 @@ shinyServer(function(input, output) {
     
     pairs(x, lower.panel = panel.smooth, upper.panel = panel.cor)
   })
+  
 })
