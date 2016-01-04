@@ -16,5 +16,3 @@ listS3Objects <- function(){
   }
   l <- l[grep("*.csv",l)]
 }
-
-dataSet <- getS3Data("sample_datasets/iris_dataset/iris.csv")

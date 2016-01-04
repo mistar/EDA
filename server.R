@@ -1,6 +1,5 @@
 library(shiny)
 library(ggplot2)
-library(DT)
 
 source("global.R")
 
@@ -132,8 +131,11 @@ shinyServer(function(input, output,session) {
         x <- paste(dataSet[,input$feature1],"^3",sep="")
         y <- paste(dataSet[,input$feature2],"^3",sep="")
       }
+    
+    f3 <-dataSet[,input$feature3]
       qplot(x, y, data = dataSet, na.rm=TRUE) +
-        stat_smooth()
+        stat_smooth() +
+        geom_point(aes(colour = factor(f3))) 
     })
 
   #-----------------------------------------------
