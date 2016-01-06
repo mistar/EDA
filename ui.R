@@ -13,36 +13,51 @@ shinyUI(fluidPage(
       #-----------------------------------------------
       conditionalPanel(
         condition = "input.datatabs == 'Data'",  
+                  radioButtons('origin', 'Data Origin',
+                               c(S3 = 'S3',
+                                 PC ='PC'),
+                               'S3',
+                               inline=TRUE
+                               )
+      ), #conditionalPanel
+      
+        #-----------------------------------------------
         
-        #           radioButtons('origin', 'Data Origin',
-        #                        c(s3 = 'AWS S3',
-        #                          dir ='File direcotry on AWS'),
-        #                        'AWS S3'),
-        
+        conditionalPanel(
+          condition = "input.datatabs == 'Data' && input.origin == 'S3'",   
+
         selectInput('s3Object', 
                     label = 'Select s3 object:', 
-                    choices = listS3Objects())
-        #,
-        #           fileInput('file1', 'Choose CSV File',
-        #                     accept=c('text/csv', 
-        #                              'text/comma-separated-values,text/plain', 
-        #                              '.csv')),
-        #           
-        #           tags$hr(),
-        #           
-        #           checkboxInput('header', 'Header', TRUE),
-        #           
-        #           radioButtons('sep', 'Separator',
-        #                        c(Comma=',',
-        #                          Semicolon=';',
-        #                          Tab='\t'),
-        #                        ','),
-        #           
-        #           radioButtons('quote', 'Quote',
-        #                        c(None='',
-        #                          'Double Quote'='"',
-        #                          'Single Quote'="'"),
-        #                        '"')
+                    choices = listS3Objects()
+                    )
+        ), #conditionalPanel
+      
+      #-----------------------------------------------
+      
+      conditionalPanel(
+        condition = "input.datatabs == 'Data' && input.origin == 'PC'",    
+        
+                  fileInput('file1', 'Choose CSV File',
+                            accept=c('text/csv', 
+                                     'text/comma-separated-values,text/plain', 
+                                     '.csv')
+                            ),
+                  
+                  tags$hr(),
+                  
+                  checkboxInput('header', 'Header', TRUE),
+                  
+                  radioButtons('sep', 'Separator',
+                               c(Comma=',',
+                                 Semicolon=';',
+                                 Tab='\t'),
+                               ','),
+                  
+                  radioButtons('quote', 'Quote',
+                               c(None='',
+                                 'Double Quote'='"',
+                                 'Single Quote'="'"),
+                               '"')
       ), #conditionalPanel
       
       #-----------------------------------------------

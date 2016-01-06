@@ -4,9 +4,24 @@ library(ggplot2)
 source("global.R")
 
 shinyServer(function(input, output,session) {
-
+  
   selectedData <-  reactive({
-    dataSet <- getS3Data(input$s3Object)
+    # Upload the selected data and reload input options to reflect the new data set
+    
+    if(input$origin == 'S3'){
+      inFile <- input$s3Object
+      if (is.null(inFile))
+        return(NULL)
+      dataSet <- getS3Data(inFile)
+      
+    } else {
+      inFile <- input$file1
+      if (is.null(inFile))
+        return(NULL)
+      dataSet <- read.csv(inFile$datapath, header=input$header, sep=input$sep, 
+                          quote=input$quote)
+    }
+    
     updateSelectInput(session, "feature1", choices = names(dataSet))
     updateSelectInput(session, "feature2", choices = names(dataSet))
     updateSelectInput(session, "feature3", choices = names(dataSet))
@@ -18,30 +33,13 @@ shinyServer(function(input, output,session) {
   
   #-----------------------------------------------
   output$dataTable <- renderDataTable({
-
-    # input$file1 will be NULL initially. After the user selects
-    # and uploads a file, it will be a data frame with 'name',
-    # 'size', 'type', and 'datapath' columns. The 'datapath'
-    # column will contain the local filenames where the data can
-    # be found.
     
-#    if(input$origin == 's3'){
-
-#     } else {
-#     inFile <- input$file1
-#     
-#     if (is.null(inFile))
-#       return(NULL)
-#     
-#     dataSet <- read.csv(inFile$datapath, header=input$header, sep=input$sep, 
-#              quote=input$quote)
-#     }
     selectedData()
   }, options = list(
     lengthMenu = list(c(5, 10, 15, -1), c('5', '10', '15', '50')),
     pageLength = 10
   )
-)
+  )
   
   #-----------------------------------------------
   output$nrow <- renderText({
@@ -57,7 +55,7 @@ shinyServer(function(input, output,session) {
     ncol(selectedData())
   })
   
-     #-----------------------------------------------
+  #-----------------------------------------------
   output$summary <- renderPrint({
     dataSet <- selectedData()
     summary(dataSet[,input$feature1])
@@ -72,7 +70,7 @@ shinyServer(function(input, output,session) {
   #-----------------------------------------------
   output$plot <- renderPlot({
     dataSet <- selectedData()
-
+    
     x <- na.omit(dataSet[,input$feature1])
     
     if (input$plotType == "Histogram") {
@@ -115,29 +113,29 @@ shinyServer(function(input, output,session) {
   output$pairPlot <- renderPlot({
     dataSet <- selectedData()
     
-        if (input$fun == "normal"){
-        x <- dataSet[,input$feature1]
-        y <- dataSet[,input$feature2]
-      } else if (input$fun == "log2"){
-        x <- paste("log2(",dataSet[,input$feature1],")",sep="")
-        y <- paste("log2(",dataSet[,input$feature2],")",sep="")
-      } else if (input$fun == "log10"){
-        x <- paste("log10(",dataSet[,input$feature1],")",sep="")
-        y <- paste("log10(",dataSet[,input$feature2],")",sep="")
-      } else if (input$fun == "^2"){
-        x <- paste(dataSet[,input$feature1],"^2",sep="")
-        y <- paste(dataSet[,input$feature2],"^2",sep="")
-      } else if (input$fun == "^3"){
-        x <- paste(dataSet[,input$feature1],"^3",sep="")
-        y <- paste(dataSet[,input$feature2],"^3",sep="")
-      }
+    if (input$fun == "normal"){
+      x <- dataSet[,input$feature1]
+      y <- dataSet[,input$feature2]
+    } else if (input$fun == "log2"){
+      x <- paste("log2(",dataSet[,input$feature1],")",sep="")
+      y <- paste("log2(",dataSet[,input$feature2],")",sep="")
+    } else if (input$fun == "log10"){
+      x <- paste("log10(",dataSet[,input$feature1],")",sep="")
+      y <- paste("log10(",dataSet[,input$feature2],")",sep="")
+    } else if (input$fun == "^2"){
+      x <- paste(dataSet[,input$feature1],"^2",sep="")
+      y <- paste(dataSet[,input$feature2],"^2",sep="")
+    } else if (input$fun == "^3"){
+      x <- paste(dataSet[,input$feature1],"^3",sep="")
+      y <- paste(dataSet[,input$feature2],"^3",sep="")
+    }
     
     f3 <-dataSet[,input$feature3]
-      qplot(x, y, data = dataSet, na.rm=TRUE) +
-        stat_smooth() +
-        geom_point(aes(colour = factor(f3))) 
-    })
-
+    qplot(x, y, data = dataSet, na.rm=TRUE) +
+      stat_smooth() +
+      geom_point(aes(colour = factor(f3))) 
+  })
+  
   #-----------------------------------------------
   output$correlations <- renderPlot({
     dataSet <- selectedData()
