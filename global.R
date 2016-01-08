@@ -16,3 +16,5 @@ listS3Objects <- function(){
   }
   l <- l[grep("*.csv",l)]
 }
+
+dataSet <- data.frame(NA)
