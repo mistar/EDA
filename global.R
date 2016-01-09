@@ -16,9 +16,5 @@ listS3Objects <- function(awsregion,s3Bucket){
   }
   l <- l[grep("*.csv",l)]
 }
+dataSet <- data.frame(NA)
 
-<<<<<<< HEAD
-dataSet <- data.frame(NA)
-=======
-dataSet <- data.frame(NA)
->>>>>>> origin/master
