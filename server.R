@@ -7,17 +7,19 @@ shinyServer(function(input, output,session) {
   
   selectedData <-  reactive({
     # Upload the selected data and reload input options to reflect the new data set
+    dataSet <- data.frame(NA)
     
     if(input$origin == 'S3'){
-      inFile <- input$s3Object
-      if (is.null(inFile))
+      if (is.null(input$s3Bucket) | is.null(input$awsregion) |is.null(input$s3Object)){
         return(NULL)
-      dataSet <- getS3Data(inFile)
+      }
+      dataSet <- getS3Data(input$awsregion,input$s3Bucket,input$s3Object)
       
     } else {
       inFile <- input$file1
-      if (is.null(inFile))
+      if (is.null(inFile)){
         return(NULL)
+      }
       dataSet <- read.csv(inFile$datapath, header=input$header, sep=input$sep, 
                           quote=input$quote)
     }
@@ -30,6 +32,20 @@ shinyServer(function(input, output,session) {
     updateSelectInput(session, "feature6", choices = names(dataSet))
     dataSet
   })
+  
+  output$s3Object <- renderUI({
+    # If missing input, return to avoid error later in function
+    if(is.null(input$awsregion) | is.null(input$s3Bucket))
+      return()
+    
+    # Get the data set with the appropriate name
+    objectList <- listS3Objects(input$awsregion,input$s3Bucket)
+    
+    # Create the checkboxes and select them all by default
+    selectInput("s3Object", "Choose S3 Object:", 
+                choices  = objectList)
+  })
+  
   
   #-----------------------------------------------
   output$dataTable <- renderDataTable({
@@ -74,15 +90,17 @@ shinyServer(function(input, output,session) {
     x <- na.omit(dataSet[,input$feature1])
     
     if (input$plotType == "Histogram") {
-      hist(x, 
-           probability = TRUE, 
-           breaks = as.numeric(input$n_breaks),
-           xlab = input$feature1, 
-           col = "grey",
-           main = "")
-      abline(v = mean(x), col = "blue", lwd = 2)
-      abline(v = median(x), col = "red", lwd = 2)
-      legend("topright", c("mean", "median"), col=c("blue", "red"), lwd=10)
+      if (is.numeric(x)){
+        hist(x, 
+             probability = TRUE, 
+             breaks = as.numeric(input$n_breaks),
+             xlab = input$feature1, 
+             col = "grey",
+             main = "")
+        abline(v = mean(x), col = "blue", lwd = 2)
+        abline(v = median(x), col = "red", lwd = 2)
+        legend("topright", c("mean", "median"), col=c("blue", "red"), lwd=10)
+      }
       
     } else if (input$plotType == "Box Plot") {
       boxplot(x,

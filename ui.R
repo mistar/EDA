@@ -7,57 +7,61 @@ shinyUI(fluidPage(
   # Application title
   titlePanel("Exploratory Data Analysis"),
   
-  # Sidebar with a slider input for the number of bins
   sidebarLayout(
     sidebarPanel(
       #-----------------------------------------------
       conditionalPanel(
         condition = "input.datatabs == 'Data'",  
-                  radioButtons('origin', 'Data Origin',
-                               c(S3 = 'S3',
-                                 PC ='PC'),
-                               'S3',
-                               inline=TRUE
-                               )
+        radioButtons('origin', 'Data Origin',
+                     c(S3 = 'S3',
+                       PC ='PC'),
+                     inline=TRUE
+        )
       ), #conditionalPanel
       
-        #-----------------------------------------------
+      #-----------------------------------------------
+      
+      conditionalPanel(
+        condition = "input.datatabs == 'Data' && input.origin == 'S3'",   
         
+        textInput("awsregion", label = h6("Enter AWS region:"),  value = ""),
+        textInput("s3Bucket", label = h6("Enter S3 Bucket:"),  value = "")
+    ), #conditionalPanel
+    
+    #-----------------------------------------------
+    
         conditionalPanel(
-          condition = "input.datatabs == 'Data' && input.origin == 'S3'",   
-
-        selectInput('s3Object', 
-                    label = 'Select s3 object:', 
-                    choices = listS3Objects()
-                    )
-        ), #conditionalPanel
+          condition = "input.datatabs == 'Data' && input.origin == 'S3' 
+          && input.awsregion != '' && input.s3Bucket != ''",   
+           uiOutput("s3Object")
+      ), #conditionalPanel
       
       #-----------------------------------------------
       
       conditionalPanel(
         condition = "input.datatabs == 'Data' && input.origin == 'PC'",    
         
-                  fileInput('file1', 'Choose CSV File',
-                            accept=c('text/csv', 
-                                     'text/comma-separated-values,text/plain', 
-                                     '.csv')
-                            ),
-                  
-                  tags$hr(),
-                  
-                  checkboxInput('header', 'Header', TRUE),
-                  
-                  radioButtons('sep', 'Separator',
-                               c(Comma=',',
-                                 Semicolon=';',
-                                 Tab='\t'),
-                               ','),
-                  
-                  radioButtons('quote', 'Quote',
-                               c(None='',
-                                 'Double Quote'='"',
-                                 'Single Quote'="'"),
-                               '"')
+        fileInput('file1', 'Choose CSV File',
+                  accept=c('text/csv', 
+                           'text/comma-separated-values,text/plain', 
+                           '.csv')
+        ),
+        
+        tags$hr(),
+        
+        checkboxInput('header', 'Header', TRUE),
+        
+        radioButtons('sep', 'Separator',
+                     c(Comma=',',
+                       Semicolon=';',
+                       Tab='\t'),
+                     ','),
+        
+        radioButtons('quote', 'Quote',
+                     c(None='',
+                       'Double Quote'='"',
+                       'Single Quote'="'"),
+                     '"')
       ), #conditionalPanel
       
       #-----------------------------------------------
@@ -172,11 +176,11 @@ shinyUI(fluidPage(
                   #-----------------------------------------------
                   tabPanel("Feature",
                            fluidRow(
-                             column(4,
+                            column(5,
                                     h6("Summary:"),
                                     textOutput("summary")
                              ),
-                             column(8,
+                             column(7,
                                     h6("Str:"),
                                     textOutput("str")
                              )
