@@ -47,18 +47,22 @@ shinyServer(function(input, output,session) {
     if(is.null(input$awsregion) | is.null(input$s3Bucket))
       return()
     
-    # Get the data set with the appropriate name
+    # Get the all objects awailable on the passed aws reagion and S3 bucket
     objectList <- listS3Objects(input$awsregion,input$s3Bucket)
     
-    # Create the checkboxes and select them all by default
+    # Create the drop down list for the found objects
     selectInput("s3Object", "Select S3 Object:", 
                 choices  = objectList)
     
   })
+
+  #-----------------------------------------------
   
   uploadS3 <- eventReactive(input$uploadS3, {
     input$objectList
   })
+
+  #-----------------------------------------------
   
   output$db <- renderUI({
     if (is.null(input$host)){
@@ -67,6 +71,8 @@ shinyServer(function(input, output,session) {
     host <- getMongoDBDatabase(input$host)
     selectInput("db", "Select data base:", choices <- host)
   })
+
+  #-----------------------------------------------
   
   output$collection <- renderUI({
     if (is.null(input$host) | is.null(input$db))
@@ -74,12 +80,15 @@ shinyServer(function(input, output,session) {
     collection <- getMongoDBCollection(input$host, input$db)
     selectInput("collection", "Select collection:", choices <- collection)
   })
+
+  #-----------------------------------------------
   
   uploadMongo <- eventReactive(input$uploadMongo, {
     input$collection
   })
   
   #-----------------------------------------------
+
   output$dataTable <- renderDataTable({
     
     selectedData()
@@ -90,32 +99,39 @@ shinyServer(function(input, output,session) {
   )
   
   #-----------------------------------------------
+
   output$nrow <- renderText({
     nrow(selectedData())
   })
+
   #-----------------------------------------------
+
   output$feature1 <- renderText({
     selectedFeature1()
   })
   
   #-----------------------------------------------
+
   output$ncol <- renderText({
     ncol(selectedData())
   })
   
   #-----------------------------------------------
+
   output$summary <- renderPrint({
     dataSet <- selectedData()
     summary(dataSet[,input$feature1])
   })
   
   #-----------------------------------------------
+
   output$str <- renderPrint({
     dataSet <- selectedData()
     str(dataSet[,input$feature1])
   })
   
   #-----------------------------------------------
+
   output$plot <- renderPlot({
     dataSet <- selectedData()
     
@@ -160,6 +176,7 @@ shinyServer(function(input, output,session) {
   })
   
   #-----------------------------------------------
+
   output$pairPlot <- renderPlot({
     dataSet <- selectedData()
     
@@ -187,6 +204,7 @@ shinyServer(function(input, output,session) {
   })
   
   #-----------------------------------------------
+
   output$correlations <- renderPlot({
     dataSet <- selectedData()
     

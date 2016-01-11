@@ -1,7 +1,7 @@
 library(shiny)
 source("global.R")
 
-# Define UI for application that draws a histogram
+# Define UI
 shinyUI(fluidPage(
   
   # Application title
@@ -9,7 +9,9 @@ shinyUI(fluidPage(
   
   sidebarLayout(
     sidebarPanel(
+
       #-----------------------------------------------
+
       conditionalPanel(
         condition = "input.datatabs == 'Data'",  
         radioButtons('origin', 'Data Origin',
@@ -64,6 +66,7 @@ shinyUI(fluidPage(
         textInput("limit", label = h5("Limit:"),  value = ""),
         actionButton("uploadMongo", "Upload data")
       ), #conditionalPanel
+
       #-----------------------------------------------
       
       conditionalPanel(
@@ -104,6 +107,7 @@ shinyUI(fluidPage(
       ), #conditionalPanel
       
       #-----------------------------------------------
+
       conditionalPanel(
         condition = "input.datatabs == 'Pairs' | input.datatabs == 'Correlations'",   
         
@@ -118,6 +122,7 @@ shinyUI(fluidPage(
       ), #conditionalPanel
       
       #-----------------------------------------------
+
       conditionalPanel(
         condition = "input.datatabs == 'Correlations'",   
         
@@ -136,6 +141,7 @@ shinyUI(fluidPage(
       ), #conditionalPanel
       
       #-----------------------------------------------
+
       conditionalPanel(
         condition = "input.datatabs == 'Pairs'",   
         
@@ -145,6 +151,7 @@ shinyUI(fluidPage(
       ), #conditionalPanel
       
       #-----------------------------------------------
+
       conditionalPanel(
         condition = "input.datatabs == 'Feature'",   
         
@@ -183,7 +190,7 @@ shinyUI(fluidPage(
     #--------------------------------------------------------------------------------------------------------------------------
     #--------------------------------------------------------------------------------------------------------------------------
     
-    # Show a plot of the generated distribution
+    # Main pannel lay-out
     mainPanel(
       tabsetPanel(id = "datatabs",
                   tabPanel("Data", 
@@ -202,6 +209,7 @@ shinyUI(fluidPage(
                   ), #tabPanel
                   
                   #-----------------------------------------------
+
                   tabPanel("Feature",
                            fluidRow(
                              column(5,
@@ -227,6 +235,9 @@ shinyUI(fluidPage(
                   tabPanel("Correlations", 
                            plotOutput("correlations")
                   ) #tabPanel
+
+                  #-----------------------------------------------
+
       ) #tabsetPanel
     ) # mainPanel
   ) # sidebarLayout
