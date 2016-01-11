@@ -14,6 +14,7 @@ shinyUI(fluidPage(
         condition = "input.datatabs == 'Data'",  
         radioButtons('origin', 'Data Origin',
                      c(S3 = 'S3',
+                       MongoDB = 'MongoDB',
                        PC ='PC'),
                      inline=TRUE
         )
@@ -24,18 +25,45 @@ shinyUI(fluidPage(
       conditionalPanel(
         condition = "input.datatabs == 'Data' && input.origin == 'S3'",   
         
-        textInput("awsregion", label = h6("Enter AWS region:"),  value = ""),
-        textInput("s3Bucket", label = h6("Enter S3 Bucket:"),  value = "")
-    ), #conditionalPanel
-    
-    #-----------------------------------------------
-    
-        conditionalPanel(
-          condition = "input.datatabs == 'Data' && input.origin == 'S3' 
-          && input.awsregion != '' && input.s3Bucket != ''",   
-           uiOutput("s3Object")
+        textInput("awsregion", label = h5("AWS region:"),  value = ""),
+        textInput("s3Bucket", label = h5("S3 Bucket:"),  value = "")
       ), #conditionalPanel
       
+      #-----------------------------------------------
+      
+      conditionalPanel(
+        condition = "input.datatabs == 'Data' && input.origin == 'S3' 
+          && input.awsregion != '' && input.s3Bucket != ''", 
+        uiOutput("s3Object"),
+        actionButton("uploadS3", "Upload data")
+        
+      ), #conditionalPanel
+      
+      #-----------------------------------------------
+      
+      conditionalPanel(
+        condition = "input.datatabs == 'Data' && input.origin == 'MongoDB'",
+        textInput("host", label = h5("Host:"),  value = "")
+      ), #conditionalPanel
+      
+      #-----------------------------------------------
+      
+      conditionalPanel(
+        condition = "input.datatabs == 'Data' && input.origin == 'MongoDB' 
+          && input.host != ''",   
+        uiOutput("db")
+      ), #conditionalPanel
+      
+      #-----------------------------------------------
+      
+      conditionalPanel(
+        condition = "input.datatabs == 'Data' && input.origin == 'MongoDB' 
+          && input.host != '' && input.db != ''",   
+        uiOutput("collection"),
+        textInput("query", label = h5("Query:"),  value = ""),
+        textInput("limit", label = h5("Limit:"),  value = ""),
+        actionButton("uploadMongo", "Upload data")
+      ), #conditionalPanel
       #-----------------------------------------------
       
       conditionalPanel(
@@ -161,27 +189,27 @@ shinyUI(fluidPage(
                   tabPanel("Data", 
                            fluidRow(
                              column(2,
-                                    h6("Number of Rows:"),
+                                    h5("Number of Rows:"),
                                     textOutput("nrow")
                              ),
                              column(2,
-                                    h6("Number of Columns:"),
+                                    h5("Number of Columns:"),
                                     textOutput("ncol")
                              )
                            ),                           
-                           h6("Data:"),
+                           h5("Data:"),
                            dataTableOutput('dataTable')
                   ), #tabPanel
                   
                   #-----------------------------------------------
                   tabPanel("Feature",
                            fluidRow(
-                            column(5,
-                                    h6("Summary:"),
+                             column(5,
+                                    h5("Summary:"),
                                     textOutput("summary")
                              ),
                              column(7,
-                                    h6("Str:"),
+                                    h5("Str:"),
                                     textOutput("str")
                              )
                            ),

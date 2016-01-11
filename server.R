@@ -13,9 +13,17 @@ shinyServer(function(input, output,session) {
       if (is.null(input$s3Bucket) | is.null(input$awsregion) |is.null(input$s3Object)){
         return(NULL)
       }
+      uploadS3()
       dataSet <- getS3Data(input$awsregion,input$s3Bucket,input$s3Object)
       
-    } else {
+    } else if(input$origin == 'MongoDB'){
+      if (is.null(input$host) | is.null(input$collection)){
+        return(NULL)
+      }
+      uploadMongo()
+      dataSet <- getMongoDBData(input$host,input$collection,input$query,input$limit)
+    }
+    else {
       inFile <- input$file1
       if (is.null(inFile)){
         return(NULL)
@@ -34,6 +42,7 @@ shinyServer(function(input, output,session) {
   })
   
   output$s3Object <- renderUI({
+    
     # If missing input, return to avoid error later in function
     if(is.null(input$awsregion) | is.null(input$s3Bucket))
       return()
@@ -42,10 +51,33 @@ shinyServer(function(input, output,session) {
     objectList <- listS3Objects(input$awsregion,input$s3Bucket)
     
     # Create the checkboxes and select them all by default
-    selectInput("s3Object", "Choose S3 Object:", 
+    selectInput("s3Object", "Select S3 Object:", 
                 choices  = objectList)
+    
   })
   
+  uploadS3 <- eventReactive(input$uploadS3, {
+    input$objectList
+  })
+  
+  output$db <- renderUI({
+    if (is.null(input$host)){
+      return(NULL)
+    }
+    host <- getMongoDBDatabase(input$host)
+    selectInput("db", "Select data base:", choices <- host)
+  })
+  
+  output$collection <- renderUI({
+    if (is.null(input$host) | is.null(input$db))
+      return(NULL)
+    collection <- getMongoDBCollection(input$host, input$db)
+    selectInput("collection", "Select collection:", choices <- collection)
+  })
+  
+  uploadMongo <- eventReactive(input$uploadMongo, {
+    input$collection
+  })
   
   #-----------------------------------------------
   output$dataTable <- renderDataTable({
