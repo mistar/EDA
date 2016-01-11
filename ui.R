@@ -63,7 +63,7 @@ shinyUI(fluidPage(
           && input.host != '' && input.db != ''",   
         uiOutput("collection"),
         textInput("query", label = h5("Query:"),  value = ""),
-        textInput("limit", label = h5("Limit:"),  value = ""),
+        textInput("limit", label = h5("Limit:"),  value = "100"),
         actionButton("uploadMongo", "Upload data")
       ), #conditionalPanel
 
